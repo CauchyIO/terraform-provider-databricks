@@ -32,6 +32,22 @@ resource "databricks_schema" "things" {
 }
 ```
 
+### Binding a schema to external secret storage
+
+A schema can be bound to a Unity Catalog [databricks_connection](connection.md), for example an Azure Key Vault connection, so that the secrets in the schema are stored in that external system. External secrets are a Beta feature of Unity Catalog.
+
+```hcl
+resource "databricks_schema" "secrets" {
+  catalog_name = databricks_catalog.sandbox.id
+  name         = "secrets"
+
+  secret_storage {
+    storage_type    = "STORAGE_TYPE_EXTERNAL"
+    connection_name = "kv_uc_secrets_demo"
+  }
+}
+```
+
 ## Argument Reference
 
 The following arguments are required:
@@ -44,6 +60,9 @@ The following arguments are required:
 * `properties` - (Optional) Extensible Schema properties.
 * `enable_predictive_optimization` - (Optional) Whether predictive optimization should be enabled for this object and objects under it. Can be `ENABLE`, `DISABLE` or `INHERIT`
 * `force_destroy` - (Optional) Delete schema regardless of its contents.
+* `secret_storage` - (Optional) Binds the schema to a connection that stores its secrets externally. Removing the block unbinds the schema. Unity Catalog refuses to delete a bound schema, so the provider unbinds the schema before deleting it. An existing binding is not picked up on import and has to be added to the configuration. This block consists of the following fields:
+  * `storage_type` - (Required) Secret storage mode of the schema. Can be `STORAGE_TYPE_EXTERNAL` to bind the schema to the connection in `connection_name`, or `STORAGE_TYPE_UNSPECIFIED` to leave it unbound.
+  * `connection_name` - (Optional) Name of the connection that backs the secrets in this schema. Used with `STORAGE_TYPE_EXTERNAL`.
 * `provider_config` - (Optional) Configure the provider for management through account provider. This block consists of the following fields:
   * `workspace_id` - (Required) Workspace ID which the resource belongs to. This workspace must be part of the account which the provider is configured with.
 
